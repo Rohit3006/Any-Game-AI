@@ -6,21 +6,45 @@ import numpy as np
 from PIL import ImageGrab
 import keyboard
 import os
-from Create_Neural_Net import create_neural_net
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Conv2D, MaxPool2D, Flatten
+from sklearn.model_selection import train_test_split
+import pickle
+import pandas as pd
+import glob
+from Deep_Neural_Net import create_deep_neural_net
+from Conv_Net import create_conv_net
+
 
 if os.path.exists("model.model"):
     model = pickle.load(open("model.model", "rb"))
 else:
-    model = create_neural_net(output_neurons=1, layers=1)
+    model = create_deep_neural_net(output_neurons=1, layers=2, epochs=3, size=50) # change line if you want conv net
+    size = 50
 
-driver = webdriver.Firefox()
-driver.get("https://flappybird.io/") # Change this to whatever website
+for i in range(5, 0, -1):
+    print(i)
+    time.sleep(1)
 
-time.sleep(5)
+frame_number = 0
 
 while True:
-    # Set bounds of frame to whatever for the chosen game
-    frame = ImageGrab.grab(bbox=(450, 200, 950, 750))
-    prediction = np.argmax(model.predict(frame))
+    frame_number += 1
+    if frame_number % 100 != 0:  # Get every 100th frame
+        continue
+
+    frame = np.array(ImageGrab.grab(bbox=(450, 200, 950, 750)))
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    frame = cv2.resize(frame, (size,size)) / 255
+    frame = frame.reshape(-1,size**2)
+
+    print(frame)
+
+    prediction = model.predict(frame)
+    print(prediction)
+    prediction = np.argmax(prediction)
     if prediction == 0:
         keyboard.press('space')
+        print("Space")
+    elif prediction == 1:
+        print("Blank")
