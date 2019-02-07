@@ -10,6 +10,8 @@ import keyboard
 frame_number = -1
 number = 1
 
+possible_inputs = "abcdefghijklmnopqrstuvwxyz".split() + ["ctrl"]
+
 directory = "Frames/"
 length = len([name for name in os.listdir(directory) if os.path.isfile(name)])
 if length > 0:
@@ -37,10 +39,18 @@ while number < max_number:
 
     if keyboard.is_pressed('escape'):
         break
-    elif keyboard.is_pressed('space'):
-        writer.writerow(["{0}".format(number), "space"])
-    else:
+
+    input_list = []
+    for poss in possible_inputs:
+        if keyboard.is_pressed(poss):
+            input_list.append(poss)
+
+    if len(input_list) == 0:
         writer.writerow(["{0}".format(number), "blank"])
+    else:
+        input_string = "+".join(input_list)
+        writer.writerow(["{0}".format(number), input_string])
+
     cv2.imwrite(os.path.join(directory, "Frame {0}.png".format(
         "0" * (len(max_string) - len(string)) + string)), frame)
     number += 1

@@ -13,7 +13,7 @@ def replace(df, column, x):
     return unique.index(x)
 
 def create_conv_net(output_neurons=1, layers=1, epochs=10, verbose=2, size=20):
-    file_dir = "/Users/rohitneppalli/Library/Mobile Documents/com~apple~CloudDocs/Documents/workspace/Python/Python/Flappy Bird/Frames/"
+    file_dir = "Frames/"
     x = []
 
     files = sorted(os.listdir(file_dir))
@@ -27,13 +27,12 @@ def create_conv_net(output_neurons=1, layers=1, epochs=10, verbose=2, size=20):
 
     x = np.array(x) / 255
 
-    df = pd.read_csv(
-        "/Users/rohitneppalli/Library/Mobile Documents/com~apple~CloudDocs/Documents/workspace/Python/Python/Flappy Bird/inputs.csv")
+    df = pd.read_csv("inputs.csv")
     y = np.array(df["Input"].apply(lambda x: replace(df, "Input", x)))
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.9)
-    x_train = x_train.reshape(-1, size**2)
-    x_test = x_test.reshape(-1, size**2)
+    #x_train = x_train.reshape(-1, size**2)
+    #x_test = x_test.reshape(-1, size**2)
     model = Sequential()
 
     model.add(Dense(size**2))
@@ -42,9 +41,7 @@ def create_conv_net(output_neurons=1, layers=1, epochs=10, verbose=2, size=20):
     model.add(Dense(100, activation='relu'))
     model.add(Dense(output_neurons, activation='softmax'))
 
-    model.compile(loss='categorical_crossentropy',
-                  optimizer='adam', metrics=['accuracy'])
-    model.fit(x_train, y_train, epochs=epochs, verbose=2,
-              validation_data=(x_test, y_test))
+    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    model.fit(x_train, y_train, epochs=epochs, verbose=2, validation_data=(x_test, y_test))
 
     return model
