@@ -23,7 +23,7 @@ inputs = list(set(df.Input.values))
 
 size_x = 70
 size_y = 30
-if os.path.exists("model2.model"):
+if os.path.exists("model.model"):
     model = load_model("model.model")
 else:
     if MODEL_TYPE == "deep":
