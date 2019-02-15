@@ -6,15 +6,17 @@ import numpy as np
 from PIL import ImageGrab
 import keyboard
 import os
-from tensorflow.keras.models import Sequential, load_model
+from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense, Conv2D, MaxPool2D, Flatten
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
 import pickle
 import pandas as pd
 import glob
-from Deep_Neural_Net import create_deep_neural_net
-from Conv_Net import create_conv_net
+import keras
+from Networks.Deep_Neural_Net import create_deep_neural_net, train
+from Networks.Conv_Net import create_conv_net
 
 MODEL_TYPE = "deep" # MODEL_TYPE should be either deep or conv
 
@@ -23,13 +25,15 @@ inputs = list(set(df.Input.values))
 
 size_x = 70
 size_y = 30
-if os.path.exists("model.model"):
-    model = load_model("model.model")
+if os.path.exists("model.h5"):
+    model = keras.models.load_model('model.h5')
 else:
     if MODEL_TYPE == "deep":
-        inputs, model = create_deep_neural_net(output_neurons=len(inputs), layers=4, epochs=20, size_x=size_x, size_y=size_y, train_size=0.80)
+        model = create_deep_neural_net(output_neurons=len(inputs), layers=5)
+        inputs, model = train(model, epochs=30, size_x=size_x,size_y=size_y, train_size=0.8)
+
     elif MODEL_TYPE == "conv":
-        inputs, model = create_conv_net(output_neurons=len(inputs), layers=2, epochs=20, size_x=size_x, size_y=size_y,train_size=0.8)
+        inputs, model = create_conv_net(output_neurons=len(inputs), layers=2, epochs=15, size_x=size_x, size_y=size_y,train_size=0.75)
 
 for i in range(5, 0, -1):
     print(i)
@@ -58,13 +62,15 @@ while True:
         continue
 
     frame = np.array(ImageGrab.grab(bbox=(360, 220, 1080, 520)))
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     if MODEL_TYPE == "conv":
         frame = cv2.resize(frame, (size_y, size_x))
         frame = frame / 255
+        frame = tf.Session().run(tf.expand_dims(frame, 0))
     elif MODEL_TYPE == "deep":
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        frame = cv2.Canny(frame, 50, 200)
+        frame = cv2.Canny(frame, 100, 200)
         frame = preprocessing.scale(cv2.resize(frame, (size_y, size_x)))
         frame = frame.reshape(-1, size_x*size_y)
 
@@ -72,7 +78,9 @@ while True:
     print(prediction)
 
     prediction = np.argmax(prediction)
-    print(inputs[prediction])
+    key_press = inputs[prediction]
 
-    if inputs[prediction] != "blank":
-        keyboard.press(inputs[prediction])
+    print(key_press)
+
+    if key_press != "blank":
+        keyboard.press(key_press)
