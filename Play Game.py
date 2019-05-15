@@ -1,39 +1,35 @@
-from selenium import webdriver
 import time
-import pickle
 import cv2
 import numpy as np
 from PIL import ImageGrab
 import keyboard
 import os
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Conv2D, MaxPool2D, Flatten
-import tensorflow as tf
-from sklearn.model_selection import train_test_split
 from sklearn import preprocessing
-import pickle
 import pandas as pd
-import glob
-import keras
+from keras.models import load_model
 from Networks.Deep_Neural_Net import create_deep_neural_net, train
 from Networks.Conv_Net import create_conv_net
 
-MODEL_TYPE = "deep" # MODEL_TYPE should be either deep or conv
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
+MODEL_TYPE = "deep"  # MODEL_TYPE should be either deep or conv
 
 df = pd.read_csv("inputs.csv")
 inputs = list(set(df.Input.values))
 
-size_x = 70
-size_y = 30
-if os.path.exists("model.h5"):
-    model = keras.models.load_model('model.h5')
+size_x = 100
+size_y = 70
+
+ROI = [100, 225, 50, 500]
+if os.path.exists("model2.h5"):
+    model = load_model('model.h5')
 else:
     if MODEL_TYPE == "deep":
         model = create_deep_neural_net(output_neurons=len(inputs), layers=5)
-        inputs, model = train(model, epochs=30, size_x=size_x,size_y=size_y, train_size=0.8)
+        inputs, model = train(model, epochs=10, size_x=size_x, size_y=size_y, train_size=0.8, roi=ROI)
 
     elif MODEL_TYPE == "conv":
-        inputs, model = create_conv_net(output_neurons=len(inputs), layers=2, epochs=15, size_x=size_x, size_y=size_y,train_size=0.75)
+        inputs, model = create_conv_net(output_neurons=len(inputs), layers=1, epochs=5, size_x=size_x, size_y=size_y,train_size=0.75)
 
 for i in range(5, 0, -1):
     print(i)
@@ -65,16 +61,21 @@ while True:
     frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
     if MODEL_TYPE == "conv":
-        frame = cv2.resize(frame, (size_y, size_x))
-        frame = frame / 255
-        frame = tf.Session().run(tf.expand_dims(frame, 0))
-    elif MODEL_TYPE == "deep":
+        frame = frame[ROI[0]:ROI[1], ROI[2]:ROI[3]]
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         frame = cv2.Canny(frame, 100, 200)
-        frame = preprocessing.scale(cv2.resize(frame, (size_y, size_x)))
-        frame = frame.reshape(-1, size_x*size_y)
+        prediction = model.predict(frame)
+    elif MODEL_TYPE == "deep":
+        frame = frame[ROI[0]:ROI[1], ROI[2]:ROI[3]]
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = cv2.Canny(frame, 100, 200)
 
-    prediction = model.predict(frame)
+        cv2.imwrite("img.png", frame)
+
+        frame = preprocessing.scale(cv2.resize(frame, (size_x, size_y)))
+        frame = frame.reshape(-1, size_x*size_y)
+        prediction = model.predict(frame)
+
     print(prediction)
 
     prediction = np.argmax(prediction)

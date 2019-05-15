@@ -14,7 +14,6 @@ def replace(df, column, x):
     unique = list(set(df[column].values))
     return unique.index(x)
 
-
 def create_conv_net(output_neurons=1, layers=1, epochs=10, verbose=2, size_x=20, size_y=20, train_size=0.7):
     file_dir = "Frames/"
     x = []
@@ -26,7 +25,8 @@ def create_conv_net(output_neurons=1, layers=1, epochs=10, verbose=2, size_x=20,
     for file in files:
         file_name = os.path.join(file_dir, file)
         array = cv2.imread(file_name)
-        array = cv2.resize(array, (size_y, size_x))
+        #array = cv2.cvtColor(array, cv2.COLOR_BGR2GRAY)
+        #array = cv2.resize(array, (size_y, size_x))
         x.append(array)
 
     x = np.array(x) / 255
@@ -41,12 +41,12 @@ def create_conv_net(output_neurons=1, layers=1, epochs=10, verbose=2, size_x=20,
 
     model = Sequential()
 
-    model.add(Conv2D(32, (3,3)))
+    model.add(Conv2D(10, (3,3)))
     model.add(MaxPool2D((2,2)))
     for i in range(layers):
         model.add(Conv2D(16, (2, 2)))
         model.add(MaxPool2D((2, 2)))
-    model.add(Dropout(0.4))
+    #model.add(Dropout(0.4))
     model.add(Flatten())
     model.add(Dense(100, activation='relu'))
     model.add(Dense(output_neurons, activation='softmax'))
